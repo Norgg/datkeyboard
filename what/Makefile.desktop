@@ -1,0 +1,6 @@
+GCC_OPTS=-std=c++1y
+
+what: what.ino KitBounce.cpp KitBounce.h lolduino.h
+	g++ $(GCC_OPTS) -x c++ -c what.ino -o what.o
+	g++ $(GCC_OPTS) -c KitBounce.cpp -o KitBounce.o
+	g++ $(GCC_OPTS) what.o KitBounce.o -o what

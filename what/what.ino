@@ -1,4 +1,6 @@
 #include "KitBounce.h"
+#include "lolduino.h"
+#include "stdio.h"
 
 // N_PINS must be at most half the bit-width of an int (so can't be >16 right now, AFAIK)
 #define N_PINS 5
@@ -13,8 +15,8 @@
 #define PRINT(stuff) Serial.print(stuff)
 #define PRINTLN(stuff) Serial.println(stuff)
 #else
-#define PRINT(stuff)
-#define PRINTLN(stuff)
+#define PRINT(stuff) printf(stuff)
+#define PRINTLN(stuff) printf(stuff); printf("\n")
 #endif
 
 const int mask = ~((~0) << N_PINS);
@@ -130,6 +132,7 @@ char lookup(int first, int second){
 
 void loop(){
     // Update button states
+
     for(int i = N_PINS - 1; i >= 0; i--){ // Downwards because we're pushing backwards onto buttons_now
         buttons[i].update();
 
@@ -173,7 +176,7 @@ void loop(){
     int bnm = buttons_now & mask;
     switch(buttons_state){
         case START:
-            PRINT("START   ");
+            //PRINTLN("START   ");
             Keyboard.releaseAll();
 
             if(nbits == 1){
