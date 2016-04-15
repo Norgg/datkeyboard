@@ -1,8 +1,14 @@
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
+
 #include "KitBounce.h"
 #include <stdio.h>
 
 // N_PINS must be at most half the bit-width of an int (so can't be >16 right now, AFAIK)
 #define N_PINS 10
+
+#define IMU_RESET_PIN 20
 
 #define LED_PIN 13
                       //lllllrrrrr
@@ -11,6 +17,8 @@
 #define ALL_SQUEEZE   0b0111101111
 
 #define HOLD_WAIT_PERIOD 500
+
+#define DEBUG true
 
 #ifdef DEBUG
 #define BUF_SIZE 128
@@ -25,6 +33,8 @@ char buffer[BUF_SIZE];
 #endif
 
 const int mask = ~((~0) << N_PINS);
+
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 // For figuring out when to consider a real button (the actual physical ones) pressed, or when a chord has been pressed
 enum ButtonsState {
@@ -203,6 +213,16 @@ void clearSerial(){
     }
 }
 
+void displaySensorDetails(void){
+    sensors_event_t sensor;
+    bno.getEvent(&sensor);
+    Serial.println("------------------------------------");
+    Serial.print  ("Orientation:  "); Serial.print(sensor.orientation.x); Serial.print(","); Serial.print(sensor.orientation.y); Serial.print(","); Serial.println(sensor.orientation.z);
+    Serial.println("------------------------------------");
+    Serial.println("");
+    delay(500);
+}
+
 void setup(){
 #ifdef DEBUG
     Serial.begin(9600);
@@ -227,8 +247,22 @@ void setup(){
 
     // If we ever want to use it
     pinMode(LED_PIN, OUTPUT);
+    pinMode(IMU_RESET_PIN, OUTPUT);
+    digitalWrite(IMU_RESET_PIN, LOW);
+    delay(10);
+    digitalWrite(IMU_RESET_PIN, HIGH);
 
     Keyboard.begin();
+
+    /* Initialise the sensor */
+    if(!bno.begin()){
+        /* There was a problem detecting the BNO055 ... check your connections */
+        Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+        while(1); // Really?
+    }
+    delay(1000);
+
+    displaySensorDetails();
 
     PRINTF("|%20s|%20s| %6s | %6s | %6s | \n", "Buttons State", "Keyboard State", "pin", "nbits", "bnm");
 }
@@ -383,8 +417,10 @@ void loop(){
     run_debug_print();
     buttons_state = transduce(buttons_state);
 
+    displaySensorDetails();
+
     // 200Hz because it seems to work fine
-    delay(5);
+    delay(50);
 }
 
 void run_debug_print(){
